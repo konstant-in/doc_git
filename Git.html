@@ -285,6 +285,9 @@ blob</code></pre>
 
         <p>Замечание: blob-оъекты создаются не только командой <i>git add</i>, но и <i>git merge</i> [слияние].</p>
 
+        <p>Замечание: commit-оъекты создаются не только командой <i>git commit</i>, но и <i>git merge</i> [если авторатическое слияние будет успешным].</p>
+
+
         <p>Поскольку содержимое всех файлов-объектов, является текстовым файлом сжатым с помощью библиотеки zlib, 
         то любой объект можно распокавать утилитой <i>gzip</i> и посмотреть что в нем содержится.</p>
 
@@ -628,8 +631,11 @@ comment #1
 
 
 
+
+<p>******************* ПРАВИТЬ неверно **************</p>
         <br>Коммиты с несколькими родителями создаются командой <i>git commit</i>, когда перед ней выпонялась команда <i>git merge</i> (она создает <i>blob</i>-объект(ы) и вносит изменения в индекс).
         Во всех ??? остальных случаях создается коммит только с одним родителем, которым является <i>текущий коммит</i>.</p>
+<p>*********************************</p>
 
 
 
@@ -1420,8 +1426,8 @@ $ export GIT_AUTHOR_DATE="2000-01-01 00:01"
 $ export GIT_COMMITTER_DATE="2000-01-01 00:01"
 
 $ git commit -m "comm #1"
-[master (root-commit) bb1b7db] v1.0
- 1 file changed, 3 insertions(+)
+[master (root-commit) 92dce70] comm #1
+ 1 file changed, 5 insertions(+)
  create mode 100644 file1</code></pre>
 
         <p>Создадим новую ветку «testing» и перейдем в неё.</p>
@@ -1451,14 +1457,8 @@ $ export GIT_AUTHOR_DATE="2000-01-01 00:02"
 $ export GIT_COMMITTER_DATE="2000-01-01 00:02"
 
 $ git commit -m "comm #2"
-[testing dbe7b13] v2.a
- 1 file changed, 3 insertions(+), 1 deletion(-)</code></pre>
-
-***
-
-        <pre><code style="color: blue">$ git status
-On branch testing
-nothing to commit, working tree clean</code></pre>
+[testing fa42faf] comm #2
+ 1 file changed, 1 insertion(+), 1 deletion(-)</code></pre>
 
         <p>Возвращаемся в ветку «master».</p>
 
@@ -1493,83 +1493,53 @@ $ export GIT_AUTHOR_DATE="2000-01-01 00:03"
 $ export GIT_COMMITTER_DATE="2000-01-01 00:03"
 
 $ git commit -m "comm #3"
-[master 627f963] v1.1
- 1 file changed, 2 insertions(+), 2 deletions(-)</code></pre>
+[master 514c571] comm #3
+ 1 file changed, 1 insertion(+), 1 deletion(-)</code></pre>
 
         <p>Смотрим</p>
 
-        <pre><code style="color: blue">$ git log --graph --all
-?????????????????????????????
-?????????????????????????????
-?????????????????????????????
-?????????????????????????????
-?????????????????????????????
-?????????????????????????????
-</code></pre>
+        <pre><code style="color: blue">$ git log --graph --all --oneline
+* 514c571 (HEAD -> master) comm #3
+| * fa42faf (testing) comm #2
+|/
+* 92dce70 comm #1</code></pre>
 
 
-        <p>Сливаем исправленную и расширенную</p>
+        <p>Сливаем две ветки.</p>
 
-        <pre><code style="color: blue">$ git merge testing
+        <pre><code style="color: blue">$ git merge -m "test" testing
 Auto-merging file1
-CONFLICT (content): Merge conflict in file1
-Automatic merge failed; fix conflicts and then commit the result.</code></pre>
+Merge made by the 'ort' strategy.
+ file1 | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)</code></pre>
 
         <p>Смотрим</p>
 
         <pre><code style="color: blue">$ cat file1
-??????????????????????
-??????????????????????
-??????????????????????
-??????????????????????
-</code></pre>
-
-        <p>Редактируем?????????????</p>
-
-        <pre><code style="color: blue">$ cat file1
-line1
-line2
-line3
-line 4
-line 5
-line 6
-line 7
-line 8</code></pre>
-
-        <p>Фиксируем</p>
-
-        <pre><code style="color: blue">
-$ git add .
-
-$ export GIT_AUTHOR_DATE="2000-01-01 00:04"
-
-$ export GIT_COMMITTER_DATE="2000-01-01 00:04"
-
-$ git commit -m "comm #4"
-[testing 509569a] v2.0
- 1 file changed, 4 insertions(+), 1 deletion(-)</code></pre>
+line 1
+line 2 (mod)
+line 3
+line 4 (mod)
+line 5</code></pre>
 
         <p>Смотрим</p>
 
-        <pre><code style="color: blue">$ git log --graph --all
-???????????????????????????????
-???????????????????????????????
-???????????????????????????????
-???????????????????????????????
-???????????????????????????????
-???????????????????????????????
+        <pre><code style="color: blue">$ git status
+On branch master
+nothing to commit, working tree clean
 </code></pre>
+
+        <p>Смог сам слить. В этом случае делает коммит!!!</p>
 
         <p>*****</p>
 
         <pre><code style="color: blue">$ git log --graph --all --oneline
-*   7233d05 (HEAD -> master) v2.1
+*   8e18d8d (HEAD -> master) Merge branch 'testing' test
 |\
-| * 509569a (testing) v2.0
-| * dbe7b13 v2.a
-* | 627f963 v1.1
+| * fa42faf (testing) comm #2
+* | 514c571 comm #3
 |/
-* bb1b7db v1.0</code></pre>
+* 92dce70 comm #1</code></pre>
 
 
         <p>*****</p>
