@@ -382,7 +382,13 @@ hint: "git config advice.addIgnoredFile false"</code></pre>
         <br>С этим учебным репозиторием мы будем работать под именем Ivan Ivanov &lt;ivan@localhost&gt;.</p>
 
         <pre><code style="color: blue">$ git config user.name "Ivan Ivanov"
+
 $ git config user.email "ivan@localhost"</code></pre>
+
+        <p>***************** git config core.autocrlf false ********** (нет преобразований символов конца строки при записи в репозиторий и при восстановлении из репозитория!!!) ***********</p>
+        <p>***************** Редактор должен быть настроин на запись конца строки как в unix ***********</p>
+
+        <pre><code style="color: blue">$ git config core.autocrlf false</code></pre>
 
         <p>Команда <i>git config</i> без параметра <i>--global</i> заносит имя, фамилию и почту в локальный конфигурационный файл,
            относящийся только к этому репозиторию.</p>
@@ -393,6 +399,7 @@ $ git config user.email "ivan@localhost"</code></pre>
         filemode = true
         bare = false
         logallrefupdates = true
+        autocrlf = false
 [user]
         name = Ivan Ivanov
         email = ivan@localhost</code></pre>
@@ -1365,123 +1372,303 @@ $ git commit -m "comment #4"
 
 
 
-        <h3>Пример использования ветвления и слияния</h3>
+        <h2>Пример использования ветвления и слияния</h2>
 
-        <p>
-            Создадим у себя на компьютере пустую папку и сделаем её <i>репозиторием Git</i>.
-        <pre><code style="color: blue">
-$ mkdir ~/project2
+        <p>Создадим у себя на компьютере пустую папку и сделаем её <i>репозиторием Git</i>.</p>
+
+        <pre><code style="color: blue">$ mkdir ~/project2
    
 $ cd ~/project2
    
 $ git init -b master
-Initialized empty Git repository in .git/
+Initialized empty Git repository in .git/</code></pre>
 
-$ git config user.name "Ivan Ivanov"
+        <p>Конфигурируем репозиторий.</p>
+
+        <pre><code style="color: blue">$ git config user.name "Ivan Ivanov"
 
 $ git config user.email "ivan@localhost"
 
-$ nano dev.py
-</code></pre>
+$ git config core.autocrlf false</code></pre>
 
-        <pre><code style="color: blue">
-x = 6
-y = 2
-print("x/y=",x/y)
-</code></pre>
+        <p>Пишем программу.</p>
 
-        <pre><code style="color: blue">
-$ git add .
+        <p>Замечание: Редактор должен быть настроин на запись конца строки как в unix (LF). В конце файла пустую строку не ставить!</p>
+
+<pre><code style="color: blue">$ cat file1
+line1
+line2
+line3
+$</code></pre>
+
+        <p>Фиксируем.</p>
+
+        <pre><code style="color: blue">$ git add .
 
 $ export GIT_AUTHOR_DATE="2000-01-01 00:01"
 
 $ export GIT_COMMITTER_DATE="2000-01-01 00:01"
 
-$ git commit -m "v1"
-[master (root-commit) afb5303] v1
+$ git commit -m "v1.0"
+[master (root-commit) bb1b7db] v1.0
  1 file changed, 3 insertions(+)
- create mode 100644 dev.py
+ create mode 100644 file1</code></pre>
 
-D:\Git\project2>python dev.py
-x/y= 3
-</code></pre>
-        Пишем вторую версию программы
-        <pre><code style="color: blue">
-$ nano dev.py
-</code></pre>
+        <p>Решили расширить функционал программы.</p>
+
+        <p>Разработку будем делать в новой ветке «testing».</p>
 
         <pre><code style="color: blue">
-x = int(input("x="))
-y = int(input("y="))
-print("x/y=",x/y)
-print("Спасибо за использование нашей программы!")
-</code></pre>
+$ git branch testing
 
-        <pre><code style="color: blue">
-$ git add .
+$ git checkout testing
+Switched to branch 'testing'</code></pre>
+
+        <p>Добавляем две строки.</p>
+
+        <pre><code style="color: blue">$ cat file1
+line1
+line2
+line3
+line 4
+line 5
+$</code></pre>
+
+        <p>Эта версия с расширенным функционалом ещё не готова, но выеснятся, что в v1.0 есть ошибка, которую нужно срочно поправить.</p>
+
+        <p>Фиксируем недоделанную версию программы как v2.a и начинаем править предыдущую версию.</p>
+
+        <pre><code style="color: blue">$ git add .
 
 $ export GIT_AUTHOR_DATE="2000-01-01 00:02"
 
 $ export GIT_COMMITTER_DATE="2000-01-01 00:02"
 
-$ git commit -m "v2"
-[master (root-commit) afb5303] v1
- 1 file changed, 3 insertions(+)
- create mode 100644 dev.py
+$ git commit -m "v2.a"
+[testing dbe7b13] v2.a
+ 1 file changed, 3 insertions(+), 1 deletion(-)</code></pre>
 
-D:\Git\project2>python dev.py
-x=9
-y=2
-x/y= 4.5
-</code></pre>
-        Получаем задание «улучшить» интерфейс.
-        Выполнять это задание будем в новой ветке «testing».
-        <pre><code style="color: blue">
-$ git branch testing
+***
 
-$ git checkout testing
+        <pre><code style="color: blue">$ git status
+On branch testing
+nothing to commit, working tree clean</code></pre>
 
-$ nano dev.py
-</code></pre>
+        <p>Возвращаемся в ветку «master».</p>
 
-        <pre><code style="color: blue">
-x = int(input("x="))
-y = int(input("y="))
-print("x/y=",x/y)
-print("Спасибо за использование нашей программы!")
-# работаем ....
-# ещё работаем ....
-# и снова работаем ....
-</code></pre>
-        Но тут обнаружился "баг" в нашей программе.
-        При делении на ноль наша программа некорректно завершает работу с выдачей непонятного для пользователя сообщения.
-        <p>
-            Получаем новое задание: отложить все дела и срочно устранить "баг".
-        </p>
-        <p>
+        <pre><code style="color: blue">$ git checkout master</code></pre>
+
+        <p>Смотрим</p>
+
+        <pre><code style="color: blue">$ cat file1
+line1
+line2
+line3</code></pre>
+
+        <p>Устраняем ошибку.</p>
+
+        <pre><code style="color: blue">$$ cat file1
+line1 (mod)
+line2 (mod)
+line3</code></pre>
+
+        <p>Фиксируем</p>
+
+        <pre><code style="color: blue">$ git add .
+
+$ export GIT_AUTHOR_DATE="2000-01-01 00:03"
+
+$ export GIT_COMMITTER_DATE="2000-01-01 00:03"
+
+$ git commit -m "v1.1"
+[master 627f963] v1.1
+ 1 file changed, 2 insertions(+), 2 deletions(-)</code></pre>
+
+        <p>*****</p>
+
+        <p>Возвращаемся в ветку «testing».</p>
+
+<pre><code style="color: blue">$ git checkout testing
+Switched to branch 'testing'</code></pre>
+
+        <p>Смотрим</p>
+
+        <pre><code style="color: blue">$ cat file1
+line1
+line2
+line3
+line 4
+line 5</code></pre>
+
+        <p>Допивываем расширенную версию</p>
+
+        <pre><code style="color: blue">$ cat file1
+line1
+line2
+line3
+line 4
+line 5
+line 6
+line 7
+line 8</code></pre>
+
+        <p>Фиксируем</p>
+
         <pre><code style="color: blue">
 $ git add .
 
-$ git commit -m "незавершенная версия с улучшенным интерфейсом"
+$ export GIT_AUTHOR_DATE="2000-01-01 00:04"
 
-$ git checkout master
+$ export GIT_COMMITTER_DATE="2000-01-01 00:04"
 
-$ git branch hotfix
+$ git commit -m "v2.0"
+[testing 509569a] v2.0
+ 1 file changed, 4 insertions(+), 1 deletion(-)</code></pre>
 
-$ git checkout hotfix
+        <p>Смотрим</p>
 
-$ nano dev.py
+        <pre><code style="color: blue">$ git log --graph --all
+* commit 509569a0e7a3f64371ac794023941e24bd6066e4 (HEAD -> testing)
+| Author: Ivan Ivanov <ivan@localhost>
+| Date:   Sat Jan 1 00:04:00 2000 +0200
+|
+|     v2.0
+|
+* commit dbe7b130b630e259c101b3fdcf48f2990ecd8e0e
+| Author: Ivan Ivanov <ivan@localhost>
+| Date:   Sat Jan 1 00:02:00 2000 +0200
+|
+|     v2.a
+|
+| * commit 627f96365c40185b3cdbeba480a5f07b75b79d6a (master)
+|/  Author: Ivan Ivanov <ivan@localhost>
+|   Date:   Sat Jan 1 00:03:00 2000 +0200
+|
+|       v1.1
+|
+* commit bb1b7db3789d3a9a66c13d1e71e7a89db7dc6295
+  Author: Ivan Ivanov <ivan@localhost>
+  Date:   Sat Jan 1 00:01:00 2000 +0200
+
+      v1.0
 </code></pre>
+
+        <p>Возвращаемся на ветку «master»</p>
+
+<pre><code style="color: blue">$ git checkout master
+Switched to branch 'testing'</code></pre>
+
+        <p>Смотрим</p>
+
+        <pre><code style="color: blue">$ git log --graph --all
+* commit 509569a0e7a3f64371ac794023941e24bd6066e4 (testing)
+| Author: Ivan Ivanov <ivan@localhost>
+| Date:   Sat Jan 1 00:04:00 2000 +0200
+|
+|     v2.0
+|
+* commit dbe7b130b630e259c101b3fdcf48f2990ecd8e0e
+| Author: Ivan Ivanov <ivan@localhost>
+| Date:   Sat Jan 1 00:02:00 2000 +0200
+|
+|     v2.a
+|
+| * commit 627f96365c40185b3cdbeba480a5f07b75b79d6a (HEAD -> master)
+|/  Author: Ivan Ivanov <ivan@localhost>
+|   Date:   Sat Jan 1 00:03:00 2000 +0200
+|
+|       v1.1
+|
+* commit bb1b7db3789d3a9a66c13d1e71e7a89db7dc6295
+  Author: Ivan Ivanov <ivan@localhost>
+  Date:   Sat Jan 1 00:01:00 2000 +0200
+
+      v1.0</code></pre>
+
+        <p>Сливаем исправленную и расширенную</p>
+
+        <pre><code style="color: blue">$ git merge testing
+Auto-merging file1
+CONFLICT (content): Merge conflict in file1
+Automatic merge failed; fix conflicts and then commit the result.</code></pre>
+
+        <p>*****</p>
+
+
+        <pre><code style="color: blue">$ cat file1
+<<<<<<< HEAD
+line1 (mod)
+line2 (mod)
+line3
+=======
+line1
+line2
+line3
+line 4
+line 5
+line 6
+line 7
+line 8
+>>>>>>> testing</code></pre>
+
+        <p>*****</p>
+
+        <pre><code style="color: blue">$ git status
+On branch testing
+You have unmerged paths.
+  (fix conflicts and run "git commit")
+  (use "git merge --abort" to abort the merge)
+
+Unmerged paths:
+  (use "git add <file>..." to mark resolution)
+        both modified:   file1
+
+no changes added to commit (use "git add" and/or "git commit -a")</code></pre>
+
+        <p>*****</p>
+
+        <p>Правим</p>
+
+        <p>*****</p>
+
+        <p>Смотрим, что получилось</p>
+
+        <pre><code style="color: blue">$ cat file1
+line1 (mod)
+line2 (mod)
+line3
+line4
+line5
+line 6 (add)
+line 7 (add)
+line 8 (add)</code></pre>
+
+        <p>*****</p>
 
         <pre><code style="color: blue">
-x = int(input("x="))
-y = int(input("y="))
-if = 0:
-    print("x/y=",x/y)
-else:
-    print("Извините, но делить на ноль нельзя")
-print("Спасибо за использование нашей программы!")
-</code></pre>
+$ git add .
+
+$ export GIT_AUTHOR_DATE="2000-01-01 00:05"
+
+$ export GIT_COMMITTER_DATE="2000-01-01 00:05"
+
+$ git commit -m "v2.1"
+[master 7233d05] v2.1</code></pre>
+
+
+        <p>*****</p>
+
+        <pre><code style="color: blue">$ git log --graph --all --oneline
+*   7233d05 (HEAD -> master) v2.1
+|\
+| * 509569a (testing) v2.0
+| * dbe7b13 v2.a
+* | 627f963 v1.1
+|/
+* bb1b7db v1.0</code></pre>
+
+
+        <p>*****</p>
 
     </div>
 </BODY>
