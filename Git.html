@@ -682,7 +682,46 @@ H 100644 475190118d49d9905c1a82c6fd11dab9ab602cc4 0     file1</code></pre>
 
         <p>Что-то индекс хранит ещё!!!!. (в редакторе видно что изменился конец файла, а начало осталось!!!)</p>
 
-        <p>Продолжим рассмотрение нашего примера. Создадим в рабочем каталоге еще один файл.</p>
+
+
+
+
+
+
+        <p>Дерево git-а аналогично каталогу файловой системы, а blob аналогичен inode.
+        Деревья образуют иерархию, аналогичную иерархии каталогов и файлов.</p>
+        <p>Деревья объединяют blob-объекты и деревья в иерархии, аналогичные каталогам файловой системе.</p>
+
+        <p><i>Снимок (snapshot) системы</i> - это дерево рабочего каталога вместе со всеми объектами на которые оно по цепочке ссылается.</p>
+        <p>Мы имеем первый снимок нашей системы</p>
+
+        <pre><code style="color: blue">
+6c59 (раб.катал.) ---+--&gt; 4751 (файл «file1»)
+                     |
+                     +--&gt; 966e (каталог «d») --&gt; 4751 (файл «file2»)</code></pre>
+        <p>Что следует из того, что идентификаторы блобов, деревьев, как и всех остальных объектов, являются хешем их содержимого?
+        Если у двух объектов-деревьев одинаковые идентификаторы,
+        это означает что внутренности этих деревьев совпадают!
+        А так как внутренности деревьев - это ссылки на объекты, то это означает что два дерева ссылаются на одни и те же объекты. Которые в свою очередь тоже могут быть деревьями или блобами.
+        Таким образом идентификатор дерева на самом деле идентифицирует не только "файлы в одной директории", но и все файлы во всех поддиректориях этой директории - одно имя для всей иерархии!</p>
+        <p>Это свойство позволяет git-у очень быстро производить сравнение
+        деревьев со сколь угодно сложной иерархией, уровнями вложенности и т.д.
+        без чтения собственно содержимого - blob-ов или tree.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+        <h4>Продолжим рассмотрение нашего примера</h4>
+
+        <p>Создадим в рабочем каталоге еще один файл.</p>
             
         <pre><code style="color: blue">
 $ echo -n "File3 v1" > file3
@@ -726,7 +765,25 @@ $ git status
 
         <p>Команда вывела файл file3 уже под заголовком «Изменения, которые будут включены в коммит (Changes to be committed)». Сейчас файл file3 подготовлен (stage) для фиксации.</p>
 
-        <h2>****</h2>
+
+
+
+        <p>********** добавить вывод команды <i>git ls-files --stage</i> ************<p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
         <p>Выполним фиксацию
@@ -763,8 +820,123 @@ nothing to commit, working tree clean</code></pre>
 
         <p>У нас «чистый» репозиторий с двумя зафиксированными изменениями.</p>
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        <p>Что поменялось?</p>
+
+        <pre><code style="color: blue">
+$ ls -l .git/index
+-rw-r--r-- 1 Konstantin 197121 307 июл 15 14:53 .git/index
+
+$ git ls-files --stage
+100644 b2fb6cc242d8ca8d2623b8deb4a1a17349af6f2f 0       d/file2
+100644 475190118d49d9905c1a82c6fd11dab9ab602cc4 0       file1
+100644 ad2a32f77c6c6eac140b94619e332c89d1319b6b 0       file3
+
+$ find .git/objects -type f
+.git/objects/03/c1a7f12800978dde0b8cd6383595e7007d0098 <span style="color: red"># новый объект</span>
+.git/objects/27/63fac853abca428edd5c2a1b48ef5d212ff99a <span style="color: red"># новый объект</span>
+.git/objects/47/5190118d49d9905c1a82c6fd11dab9ab602cc4
+.git/objects/69/701b6e701d429882c083e98e1ecf195868b38c
+.git/objects/6c/59b709d4abf607ab16a03b22db93412fe437a4
+.git/objects/96/6e9a46c8df9aa3b2108864be07abe7b5d1d0f9
+.git/objects/ad/2a32f77c6c6eac140b94619e332c89d1319b6b
+.git/objects/b2/fb6cc242d8ca8d2623b8deb4a1a17349af6f2f
+
+$ git cat-file -t 03c1
+commit
+
+$ git cat-file -t 2763
+tree
+
+$ git cat-file -p 03c1
+tree 2763fac853abca428edd5c2a1b48ef5d212ff99a
+parent 69701b6e701d429882c083e98e1ecf195868b38c
+author Ivan Ivanov &lt;ivan@localhost&gt; 946677720 +0200
+committer Ivan Ivanov &lt;ivan@localhost&gt; 946677720 +0200
+
+comment #2
+
+$ git cat-file -p 2763
+040000 tree 966e9a46c8df9aa3b2108864be07abe7b5d1d0f9    d
+100644 blob 475190118d49d9905c1a82c6fd11dab9ab602cc4    file1
+100644 blob ad2a32f77c6c6eac140b94619e332c89d1319b6b    file3
+</code></pre>
+        Снова изменился индекс (однако вывод команды <i>git ls-files --stage</i> не изменился).
+        <pre><code style="color: blue">
+$ git branch
+* master
+</code></pre>
         <p>
-            Изменим содержимое файла file3, добавив еще одну строку. И смотрим статус.
+            Текущий указатель по прежнему <i>master</i>
+        <pre><code style="color: blue">
+$ git rev-parse master
+03c1a7f12800978dde0b8cd6383595e7007d0098
+</code></pre>
+        Текущий коммит сменился на <i>03c1a7f12800978dde0b8cd6383595e7007d0098</i>
+        <pre><code style="color: blue">
+$ git cat-file -p 03c1
+tree 2763fac853abca428edd5c2a1b48ef5d212ff99a
+parent 69701b6e701d429882c083e98e1ecf195868b38c
+author Ivan Ivanov &lt;ivan@localhost&gt; 946677720 +0200
+committer Ivan Ivanov &lt;ivan@localhost&gt; 946677720 +0200
+
+comment #2
+</code></pre>
+        Новый коммит указывает на новое дерево.
+        Родителем нового коммита является наш первый коммит
+        <p>
+            Новый снимок системы
+        <pre><code style="color: blue">
+2763 ---+--&gt; 4751 (файл «file1»)
+        |
+        +--&gt; ad2a (файл «file3»)
+        |
+        +--&gt; 966e (каталог «d») --&gt; 4751 (файл «file2»)
+</code></pre>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        <h2>****</h2>
+
+
+        <p>Изменим содержимое файла file3, добавив еще одну строку. И смотрим статус.</p>
+
         <pre><code style="color: blue">$ echo -ne "\nSecond line (v2)" >> file1
 
 $ git status
@@ -791,7 +963,38 @@ $ git status
 
         <p>....что это значит???....</p>
 
+
+
+
+
+        <pre><code style="color: blue">$ git ls-files --stage
+100644 b2fb6cc242d8ca8d2623b8deb4a1a17349af6f2f 0       d/file2
+100644 1d5260cb0591933230fdaaa8035a94b8e393ea20 0       file1 <span style="color: red"># поменялся идентификатор</span>
+100644 ad2a32f77c6c6eac140b94619e332c89d1319b6b 0       file3
+
+$ find .git/objects -type f
+.git/objects/03/c1a7f12800978dde0b8cd6383595e7007d0098
+.git/objects/1d/5260cb0591933230fdaaa8035a94b8e393ea20 <span style="color: red"># новый объект</span>
+.git/objects/27/63fac853abca428edd5c2a1b48ef5d212ff99a
+.git/objects/47/5190118d49d9905c1a82c6fd11dab9ab602cc4
+.git/objects/69/701b6e701d429882c083e98e1ecf195868b38c
+.git/objects/6c/59b709d4abf607ab16a03b22db93412fe437a4
+.git/objects/96/6e9a46c8df9aa3b2108864be07abe7b5d1d0f9
+.git/objects/ad/2a32f77c6c6eac140b94619e332c89d1319b6b
+.git/objects/b2/fb6cc242d8ca8d2623b8deb4a1a17349af6f2f
+</code></pre>
+        <p>Замечание: Когда команда <i>git add</i> выполняется с модифицированным файлом, она не добавляет, а изменяет уже имеющуюся запись в индексе.</p>
+
+
         <p>В папке <i>object</i> появился ещё один <i>blob</i>-объект <i>1d5260cb0591933230fdaaa8035a94b8e393ea20</i> с новым содержимым файла <i>file1</i></p>
+
+
+
+
+        <h2>****</h2>
+
+
+
 
         <p>Подготовка выполнена. Можно фиксировать новое состояние.</p>
         <pre><code style="color: blue">
@@ -839,702 +1042,14 @@ $ git status
 
         <p>И снова у нас «чистый директорий».</p>
 
-        <p>Команда <i>git log</i> имеет множество параметров. Удобный вывод, которым мы будем пользоваться в дальнейшем, можно получить с такими парамертами:</p>
 
-        <pre><code style="color: blue">
-$ git log --pretty=format:'%h %ad - %s%d [%an]' --graph --date=format:'%Y-%m-%d %H:%M %z'
-* 344b36b 2000-01-01 00:03 +0200 - comment #3 (HEAD -> master) [Ivan Ivanov]
-* 03c1a7f 2000-01-01 00:02 +0200 - comment #2 [Ivan Ivanov]
-* 69701b6 2000-01-01 00:01 +0200 - comment #1 [Ivan Ivanov]
-</code></pre>
-        
-        <h3>Восстановление предыдущих состояний рабочего каталога. Команда <i>git checkout</i></h3>
+        <h2>****</h2>
 
-        <p>
-            Откатить состояние рабочего каталога Git на состояние зафиксированное коммитом с &lt;id&gt; равным &lt;id-commit&gt; можно командой <i>git checkout &lt;id-commit&gt;</i>
-        </p>
 
-        <p>Откатимся на <i>03c1a7</i> (comment #2).</p>
 
-        <pre><code style="color: blue">
-$ git checkout 03c1
-Note: switching to '03c1'.
 
-You are in 'detached HEAD' state. You can look around, make experimental
-changes and commit them, and you can discard any commits you make in this
-state without impacting any branches by switching back to a branch.
+        <p>Что поменялось?</p>
 
-If you want to create a new branch to retain commits you create, you may
-do so (now or later) by using -c with the switch command. Example:
-
-  git switch -c <new-branch-name>
-
-Or undo this operation with:
-
-  git switch -
-
-Turn off this advice by setting config variable advice.detachedHead to false
-
-HEAD сейчас на 03c1a7f comment #2
-</code></pre>
-        <p>Проверьте состояние рабочего каталога. [проверить содеримое каталогов и файлов...]</p>
-
-        <p>Вернемся на состояние зафиксированное последним коммитом (на коммит на который указывает указатель <i>master</i>).</p>
-        <pre><code style="color: blue">
-$ git checkout master
-Предыдущая позиция HEAD была 03c1a7f comment #2
-Переключено на ветку «master»
-</code></pre>
-
-        <h2>Внутреннее устройство git</h2>
-
-        <p>Мы получили представление как работаю основные команды git.
-            Но чтобы полностью понять их работу и работу других команд git, надо знать внутреннее устройство репозитория.</p>
-
-        <p>
-            Повторим наш пример почти один в один. Только теперь будем рассматривать какие именно изменения в репозитории вызывают уже рассмотренные нами команды.
-        </p>
-
-        <h3>Создание нового репозитория. Команда <i>git init</i></h3>
-
-        <p>
-            Создадим у себя на компьютере новый репозиторий в папке <i>project1.0</i>.
-        <pre><code style="color: blue">
-$ mkdir ~/project1.0
-   
-$ cd ~/project1.0
-   
-$ git init -b master
-Initialized empty Git repository in .git/
-
-$ git config user.name "Ivan Ivanov"
-$ git config user.email "ivan@localhost"
-</code></pre>
-        Проверим какие файлы папки есть внутри каталога <i>.git</i>.
-        <p>
-        <pre><code style="color: blue">
-$ ls -l .git
-total 7
--rw-r--r-- 1 Konstantin 197121 181 июл 14 11:28 config
--rw-r--r-- 1 Konstantin 197121  73 июл 14 11:28 description
--rw-r--r-- 1 Konstantin 197121  23 июл 14 11:28 HEAD
-drwxr-xr-x 1 Konstantin 197121   0 июл 14 11:28 hooks/
-drwxr-xr-x 1 Konstantin 197121   0 июл 14 11:28 info/
-drwxr-xr-x 1 Konstantin 197121   0 июл 14 11:28 objects/
-drwxr-xr-x 1 Konstantin 197121   0 июл 14 11:28 refs/
-</code></pre>
-        Имеем три файла и четыре каталога.
-        <p>
-            Проверим наличие файлов внутри двух каталогов objects/ и refs/ или их подкаталогов.
-        <pre><code style="color: blue">
-$ find .git/objects -type f
-
-$ find .git/refs -type f
-</code></pre>
-        В новом репозитории эти каталоги пустые.
-        <p>
-            Добавим в каталог репозитория два файла
-        <pre><code style="color: blue">
-$ mkdir d
-
-$ echo -n "File1 v1" > file1
-
-$ echo -n "File2 v1" > d/file2
-</code></pre>
-        Добавление файлов в рабочий каталог никак не отражается на состоянии каталога .git!
-
-        <h3>Команда <i>git add</i>. <i>Индекс</i>. Объекты типа <i>blob</i></h3>
-
-        <p>
-            Сделаем добавленные файлы отслеживаемыми. Начнем с файла d/file2.
-        <pre><code style="color: blue">
-$ git add d/file2
-</code></pre>
-        Посмотрим как эта операция отразилась на состоянии каталога <i>.git</i>.
-        <p>
-        <pre><code style="color: blue">
-$ ls -l .git
-total 8
--rw-r--r-- 1 Konstantin 197121 181 июл 14 11:28 config
--rw-r--r-- 1 Konstantin 197121  73 июл 14 11:28 description
--rw-r--r-- 1 Konstantin 197121  23 июл 14 11:28 HEAD
-drwxr-xr-x 1 Konstantin 197121   0 июл 14 11:28 hooks/
--rw-r--r-- 1 Konstantin 197121 104 июл 14 12:39 index
-drwxr-xr-x 1 Konstantin 197121   0 июл 14 11:28 info/
-drwxr-xr-x 1 Konstantin 197121   0 июл 14 12:39 objects/
-drwxr-xr-x 1 Konstantin 197121   0 июл 14 11:28 refs/
-</code></pre>
-        В <i>.git</i> появился новый файл <i>index</i>.
-        <p>
-        <pre><code style="color: blue">
-$ find .git/objects -type f
-.git/objects/b2/fb6cc242d8ca8d2623b8deb4a1a17349af6f2f
-
-$ find .git/refs -type f
-</code></pre>
-        В <i>.git/objects</i> появился новый каталог <i>d</i> с файлом <i>fb6cc242d8ca8d2623b8deb4a1a17349af6f2f</i>.
-        <p>
-            Все файлы образующиеся в процессе работы в каталоге <i>.git/objects/</i> называются <i>объектами</i>, а сам каталог - <i>базой объектов</i>.
-            <br>
-            Идентификаторы всех объектов являются 40- разрядными шестнадцатеричными числами.
-            <br>
-            Имя подкаталога в котором сохраняется объект - это подстрока из первых двух символов идентификатора объекта.
-            Имя файла - это подстрока из оставшихся 38 символов идентификатора.
-            <br>
-            Содержимое всех объектов, сжимается с помощью библиотеки zlib.
-            Поэтому если заглянуть внутрь файла <i>b2/fb6cc242d8ca8d2623b8deb4a1a17349af6f2f</i>, то увидим мешанину символов.
-        <pre><code style="color: blue">
-$ cat .git/objects/b2/fb6cc242d8ca8d2623b8deb4a1a17349af6f2f
-xK▒▒OR▒`p▒▒I5R(3%Uq
-</code></pre>
-        <p>
-            Распакуем наш объект <i>b2fb6cc242d8ca8d2623b8deb4a1a17349af6f2f</i> утилитой <i>gzip</i>.
-        <pre><code style="color: blue">
-$ echo -en "\x1f\x8b\x08\x00\x00\x00\x00\x00" |cat - .git/objects/b2/fb6cc242d8ca8d2623b8deb4a1a17349af6f2f |gzip -dc
-blob 8File2 v1
-gzip: stdin: unexpected end of file
-</code></pre>
-        Видим два поля:
-        <br> - некий заголовок: «blob 8»
-        <br> - и содержимое файла «d/file2»: «File2 v1».
-        <br>Примечания:
-        <br>1. слово «blob» тип объекта (Binary Large Object),
-        <br>2. число 8 - длина содержимого файла,
-        <br>3. идентификатор объекта - значение SHA-1 хеш-функции от содержимого объекта (до сжатия); в нашем случае от строки «blob 8\0File2 v1» (\0 - символ с нулевым код).
-        <br> Проверим последнее утверждение
-        <pre><code style="color: blue">
-$ echo -en 'blob 8\0File2 v1' | sha1sum
-b2fb6cc242d8ca8d2623b8deb4a1a17349af6f2f *-
-</code></pre>
-        Для информации:
-        <br>
-        Объекты всех других типов также сжимаются с помощью библиотеки zlib.
-        <br>
-        Идентификаторы обьектов всех других типов также являются значение SHA-1 хеш-функции от содержимого объекта до сжатия.??????
-        <p>
-            Тип и содержимое объекта типа можно посмотреть командой <i>git cat-file</i>
-        <pre><code style="color: blue">
-$ git cat-file -t b2fb
-blob
-
-$ git cat-file -p b2fb
-File2 v1
-</code></pre>
-        Рассмотрим файл <i>index</i> появившейся в каталоге <i>.git</i> после выполнения команды <i>git add</i>
-        <br>Непосредственный просмотр индекса утилитой <i>cat</i> также даёт мешанину символов (разве, что кроме имени файла)
-        <pre><code style="color: blue">
-$ cat .git/index
-▒▒&H]*▒4@ȫ▒]*▒4k▒X▒▒▒l▒B▒ʍ&#▒޴▒▒sI▒o/d/file2
-▒1▒        ▒
-</code></pre>
-        В понятном виде, почти всю информацию хранящуюся в индексе, можно посмотреть так
-        <pre><code style="color: blue">
-$ git ls-files --stage
-100644 b2fb6cc242d8ca8d2623b8deb4a1a17349af6f2f 0       d/file2
-</code></pre>
-        Индекс состоит из записей. Сейчас у нас только одна запись.
-        <ul>
-            <li>
-                Каждая запись состоит из четырех полей:
-            </li>
-            <li>
-                первое поле: атрибуты добавленного файла;
-                <br>первая группа из трёх цифр - тип файла (040 - каталог, 100 - обычный файл, 120 - символическая ссылка, 160 - gitlink);
-                <br>вторая группа из трёх - права доступа для владельца файла, для группы владельца и для остальных пользователей записанные как комбинация цифр 4, 2 и 1 (4 - право на чтение, 2 - право на запись, 1 - право на выполнение).
-            </li>
-            <li>
-                второе поле: идентификатор объекта, созданный на основе добавленного файла;
-            </li>
-            <li>
-                третье поле: stage number; 0 - если нет конфликта слияния (об этом позже);
-            </li>
-            <li>
-                последнее поле: добавленный командой <i>git add</i> файл, вместе с относительным путем до него.
-            </li>
-        </ul>
-
-        <p>
-            Сделаем отслеживаемым ещё один созданный нами файл file1.
-        <pre><code style="color: blue">
-$ git add file1
-</code></pre>
-        Посмотрим как эта операция отразилась на состоянии каталога .git.
-        <p>
-        <pre><code style="color: blue">
-$ ls -l .git
-total 8
--rw-r--r-- 1 Konstantin 197121 181 июл 14 11:28 config
--rw-r--r-- 1 Konstantin 197121  73 июл 14 11:28 description
--rw-r--r-- 1 Konstantin 197121  23 июл 14 11:28 HEAD
-drwxr-xr-x 1 Konstantin 197121   0 июл 14 11:28 hooks/
--rw-r--r-- 1 Konstantin 197121 176 июл 14 15:12 index <span style="color: red"># было: 104 июл 14 12:39</span>
-drwxr-xr-x 1 Konstantin 197121   0 июл 14 11:28 info/
-drwxr-xr-x 1 Konstantin 197121   0 июл 14 15:12 objects/
-drwxr-xr-x 1 Konstantin 197121   0 июл 14 11:28 refs/
-</code></pre>
-        Изменились размер и время модификации файла <i>index</i>.
-        <br>
-        Новое содержимое индекса
-        <pre><code style="color: blue">
-$ git ls-files --stage
-100644 b2fb6cc242d8ca8d2623b8deb4a1a17349af6f2f 0       d/file2
-100644 475190118d49d9905c1a82c6fd11dab9ab602cc4 0       file1
-</code></pre>
-        Добавилась строчка об ещё одном отслеживаемом файле.
-        <br>
-        А какие изменения произошли в базе объектов?
-        <pre><code style="color: blue">
-$ find .git/objects -type f
-.git/objects/47/5190118d49d9905c1a82c6fd11dab9ab602cc4 <span style="color: red"># новый объект</span>
-.git/objects/b2/fb6cc242d8ca8d2623b8deb4a1a17349af6f2f
-</code></pre>
-        В <i>.git/objects</i> появился новый объект <i>475190118d49d9905c1a82c6fd11dab9ab602cc4</i>.
-        <p>
-        </p>
-
-        <h3>Команда <i>git commit</i></h3>
-
-        <p>
-            Выполним команду <i>git commit</i>.
-        <pre><code style="color: blue">
-$ export GIT_AUTHOR_DATE="2000-01-01 00:01"
-
-$ export GIT_COMMITTER_DATE="2000-01-01 00:01"
-
-$ git commit -m "comment #1"
-[master (root-commit) 69701b6] comment #1
- 2 files changed, 2 insertions(+)
- create mode 100644 d/file2
- create mode 100644 file1
-</code></pre>
-        Посмотрим как эта операция отразится на состоянии каталога <i>.git</i>.
-        <pre><code style="color: blue">
-$ ls -l .git
-total 9
--rw-r--r-- 1 Konstantin 197121  11 июл 15 07:44 COMMIT_EDITMSG <span style="color: red"># новый файл</span>
--rw-r--r-- 1 Konstantin 197121 181 июл 14 11:28 config
--rw-r--r-- 1 Konstantin 197121  73 июл 14 11:28 description
--rw-r--r-- 1 Konstantin 197121  23 июл 14 11:28 HEAD
-drwxr-xr-x 1 Konstantin 197121   0 июл 14 11:28 hooks/
--rw-r--r-- 1 Konstantin 197121 235 июл 15 07:44 index <span style="color: red"># изменились размер и время модификации</span>
-drwxr-xr-x 1 Konstantin 197121   0 июл 14 11:28 info/
-drwxr-xr-x 1 Konstantin 197121   0 июл 15 07:44 logs/
-drwxr-xr-x 1 Konstantin 197121   0 июл 15 07:44 objects/
-drwxr-xr-x 1 Konstantin 197121   0 июл 14 11:28 refs/
-</code></pre>
-        В каталоге <i>.git</i> появился новый файл <i>COMMIT_EDITMSG</i>, а файл <i>index</i>изменились.
-        <p>
-        <pre><code style="color: blue">
-$ git ls-files --stage <span style="color: red"># вывод команды прежний, несмотря на то, что сам файл index изменился; в индексе содержится больше информации, чем показывает эта команда :)</span>
-100644 b2fb6cc242d8ca8d2623b8deb4a1a17349af6f2f 0       d/file2
-100644 475190118d49d9905c1a82c6fd11dab9ab602cc4 0       file1
-
-$ find .git/objects -type f
-.git/objects/47/5190118d49d9905c1a82c6fd11dab9ab602cc4
-.git/objects/69/701b6e701d429882c083e98e1ecf195868b38c <span style="color: red"># новый объект</span>
-.git/objects/6c/59b709d4abf607ab16a03b22db93412fe437a4 <span style="color: red"># новый объект</span>
-.git/objects/96/6e9a46c8df9aa3b2108864be07abe7b5d1d0f9 <span style="color: red"># новый объект</span>
-.git/objects/b2/fb6cc242d8ca8d2623b8deb4a1a17349af6f2f
-
-$ find .git/refs -type f
-.git/refs/heads/master <span style="color: red"># новый файл</span>
-
-$ git cat-file -t b2fb
-blob <span style="color: red"># это уже известный нам blob-объект</span>
-
-$ git cat-file -t 6970
-commit <span style="color: red"># это новый, для нас, тип объекта - commit</span>
-
-$ git cat-file -t 6c59
-tree <span style="color: red"># это новый, для нас, тип объекта - tree</span>
-
-$ git cat-file -t 966e
-tree <span style="color: red"># ещё один объект tree-типа</span>
-</code></pre>
-        Сначала посмотрим что хранят новые файлы
-        <pre><code style="color: blue">
-$ cat .git/COMMIT_EDITMSG <span style="color: red"># этот файл хранит сообщение нашего коммита</span>
-comment #1
-
-$ cat .git/refs/heads/master
-69701b6e701d429882c083e98e1ecf195868b38c <span style="color: red"># этот файл хранит идентификатор созданного commit-объекта</span>
-</code></pre>
-        <p>
-            Все файла создаваемые в каталоге <i>.git/refs/heads/</i> в процессе работы содержат идентификаторы каких-либо commit-объектов.
-            Такого типа файлы называются <i>указателями</i>.
-            Т.о. у нас появился первый указатель с именем <i>master</i>.
-        </p>
-        <p>
-            Для просмотра всех существующих указателей имеется команда git <i>git branch</i> (без параметров) :
-        <pre><code style="color: blue">
-$ git branch
-* master
-</code></pre>
-        <p>
-            А идентификатор коммита, хранящийся в указателе &lt;name&gt; можно посмотреть командой <i>git rev-parse &lt;name&gt;</i>, например:
-        <pre><code style="color: blue">
-$ git rev-parse master
-69701b6e701d429882c083e98e1ecf195868b38c
-</code></pre>
-        <p>
-            Команда <i>git commit</i> создала новые, для нас типы объектов <i>tree</i> и <i>commit</i>.
-            Давайте разберемся что они из себя представляют.
-        </p>
-
-        <h3>Объекты типа <i>tree</i></h3>
-
-        <p>
-            Посмотреть содержимое дерева можно, командой <i>cat-file</i> с ключем <i>-p</i> или специальной командой <i>git ls-tree</i>.
-        </p>
-        <p>
-            У наших двух деревьев такое содержание
-        <pre><code style="color: blue">
-$ git cat-file -p 6c59
-040000 tree 966e9a46c8df9aa3b2108864be07abe7b5d1d0f9    d
-100644 blob 475190118d49d9905c1a82c6fd11dab9ab602cc4    file1
-
-$ git cat-file -p 966e
-100644 blob b2fb6cc242d8ca8d2623b8deb4a1a17349af6f2f    file2
-</code></pre>
-        <p>
-        </p>
-
-        <p>
-            Дерево хранит список записей файлов и каталогов, а также соответствующих им объектов.
-            Каждая запись в дереве состоит из четырех полей:
-        <ul>
-            <li>
-                Первое поле: атрибуты файла (или каталога) [аналогично имеющемуся в индексе];
-                <ul>
-                    <li>
-                        первая группа из трёх цифр - тип файла (040 - каталог, 100 - обычный файл, 120 - символическая ссылка, 160 - gitlink);
-                    <li>
-                        вторая группа из трёх цифр - права доступа для владельца файла, для группы владельца и для остальных пользователей записанные как комбинация цифр 4, 2 и 1 (4 - право на чтение, 2 - право на запись, 1 - право на выполнение).
-                </ul>
-            <li>
-                Второе поле: тип объекта. Может быть <i>blob</i> или <i>tree</i>.
-            </li>
-            <li>
-                Третье поле: идентификатор объекта.
-            </li>
-            <li>
-                Четвертое поле: имя файла, если тип объекта - <i>blob</i>, или имя директории, если - <i>tree</i>.
-            </li>
-        </ul>
-        <p>
-            Идентификатор дерева является значением SHA1 хеш-функции от всей информации которую оно хранит.
-            Структура этой информации соответствует вышеприведенному описанию. При этом поля разделяются знаками ???, а записи знаками???
-            Эта структура, как уже говорилось, хранится в сжатом виде.
-        </p>
-        <p>
-            Дерево git-а аналогично каталогу файловой системы, а blob аналогичен inode.
-            Деревья образуют иерархию, аналогичную иерархии каталогов и файлов.
-        </p>
-        <p>
-            Деревья объединяют blob-объекты и деревья в иерархии, аналогичные каталогам файловой системе.
-        </p>
-        <p>
-            Деревья строятся по команде <i>git commit</i> на основании информации содержащийся в индексе, а не фактического содержания рабочего каталога в момент выполнения команды! Это очень важно для понимания работы git.
-        </p>
-        <p>
-            <i>Снимок (snapshot) системы</i> - это дерево рабочего каталога вместе со всеми объектами на которые оно по цепочке ссылается.
-        </p>
-        <p>
-            Мы имеем первый снимок нашей системы
-        <pre><code style="color: blue">
-6c59 (раб.катал.) ---+--&gt; 4751 (файл «file1»)
-                     |
-                     +--&gt; 966e (каталог «d») --&gt; 4751 (файл «file2»)
-</code></pre>
-        <p>
-            Что следует из того, что идентификаторы блобов, деревьев, как и всех остальных объектов, являются хешем их содержимого?
-            Если у двух объектов-деревьев одинаковые идентификаторы,
-            это означает что внутренности этих деревьев совпадают!
-            А так как внутренности деревьев - это ссылки на объекты, то это означает что два дерева ссылаются на одни и те же объекты. Которые в свою очередь тоже могут быть деревьями или блобами.
-            Таким образом идентификатор дерева на самом деле идентифицирует не только "файлы в одной директории", но и все файлы во всех поддиректориях этой директории - одно имя для всей иерархии!
-        </p>
-        <p>
-            Это свойство позволяет git-у очень быстро производить сравнение
-            деревьев со сколь угодно сложной иерархией, уровнями вложенности и т.д.
-            без чтения собственно содержимого - blob-ов или tree.
-        </p>
-
-        <h3>Объекты типа <i>commit</i></h3>
-
-        <p>
-            Содержимое коммита можно посмотреть командой <i>cat-file</i> с ключом <i>commit</i> или с ключем <i>-p</i>.
-        </p>
-        <p>
-            Посмотрим содержимое нашего первого коммита
-        <pre><code style="color: blue">
-$ git cat-file -p 6970
-tree 6c59b709d4abf607ab16a03b22db93412fe437a4
-author Ivan Ivanov &lt;ivan@localhost&gt; 946677660 +0200
-committer Ivan Ivanov &lt;ivan@localhost&gt; 946677660 +0200
-
-comment #1
-</code></pre>
-        <p>
-            Объект-commit состоит из следующих полей:
-        <ul>
-            <li>ссылка на объект-дерево, который хранит иерархию рабочего каталога;</li>
-            <li>ссылка на родителя (parent), если таковой есть (у нас пока нет);</li>
-            <li>author – это человек, внесший изменения в файлы проекта;</li>
-            <li>время создания изменений;</li>
-            <li>committer - это человек, внесший изменения в историю проекта, т.е. выполнивший команду git commit;</li>
-            <li>время фиксации изменений;</li>
-            <li>сообщение - пояснительный текст к коммиту.</li>
-        </ul>
-        Если родителей несколько, то ссылка на каждого из родителей выводится на отдельной строчке.
-        <p>
-            Что такое родитель коммита?
-            Это другой, уже существующие в системе, commit-объект, на основе которого строится данный коммит объект.
-            Что это конкретно означает рассмотрим позже.
-        </p>
-        <p>
-            Стандартная ситуация - у каждого коммита один родитель.
-        </p>
-        <p>
-            Поскольку у нас это первый коммит, то никаких других до него не было, а значит и родителей у первого коммита быть не может.
-        </p>
-        <p>
-            Поля author и committer и их почтовые адреса заполняются на основании переменных окружения «GIT_AUTHOR_NAME», «GIT_AUTHOR_EMAIL», «GIT_COMMITTER_NAME», «GIT_COMMITTER_EMAIL».
-            Если эти переменные окружения не установлены, то значения берутся из локального файла конфигурации. А если и в нем не установлены то из глобального файла конфигурации.
-        </p>
-        <p>
-            Как правило временем создании и фиксации изменений считается текущее время.
-            Однако если установлена переменные окружения «GIT_AUTHOR_DATE» и «GIT_COMMITTER_DATE» , то время создании и фиксации изменений устанавливается на основании значений этих переменных окружения.
-            Как правило эти переменные окружения не установлены. Это требуется только в учебных примерах.
-        </p>
-        <p>
-            При помощи параметров --author=<i>имя &lt;email&gt;</i> и --date=<i>время</i> команды <i>git commit</i> также можно переопределить значения, но только для полей author и время создания изменений.
-        </p>
-        <p>
-            Зачем в учебных примерах может понадобиться устанавливать переменные окружения «GIT_AUTHOR_DATE» и «GIT_COMMITTER_DATE»?
-        </p>
-        <p>
-            Наличие в объекте commit имени автора и коммитера, а также времени создания и фиксации изменений приводит к тому, что идентификаторы создаваемых коммитов зависят от этих значений.
-            И при повторении примеров идентификаторы коммитов будут получаться иными.
-            Иногда это неудобно. В таких случаях автора и коммитера мы будем устанавливать в локальном файле конфигурации:
-        <pre><code style="color: blue">
-git config user.name "Ivan Ivanov"
-git config user.email "ivan@localhost"
-</code></pre>
-        а время задавать в командной строке:
-        <pre><code style="color: blue">
-$ export GIT_AUTHOR_DATE="2000-01-01 00:00:00"
-$ export GIT_COMMITTER_DATE="2000-01-01 00:00:00"
-</code></pre>
-        <p>
-            Коммиты могут порождаться разными командами.
-            Основная команда это <i>git commit</i>.
-            Эта команда может создать коммит только с одним родителем - <i>текущим коммитом</i>.
-            <br>
-            <i>Текущий коммит</i> - коммит идентификатор которого хранится <i>текущем указателе</i>.
-            <br>
-            <i>Текущий указатель</i> - указатель имя которого хранится в файле <i>.git/HEAD</i>.
-        </p>
-        <p>
-        <pre><code style="color: blue">
-$ cat .git/HEAD
-ref: refs/heads/master
-
-$ cat .git/refs/heads/master
-69701b6e701d429882c083e98e1ecf195868b38c
-</code></pre>
-        У нас текущий (и единственный) указатель <i>master</i>.
-        Текущий (и единственный) коммит <i>69701b6e701d429882c083e98e1ecf195868b38c</i>.
-        <p>
-            Уже говорилось, что список всех существующих указателей выводит команда git <i>git branch</i> (без параметров) :
-        <pre><code style="color: blue">
-$ git branch
-* master
-</code></pre>
-        Текущий коммит в списке выделяется звездочкой.
-        <p>
-            Идентификатор коммита, хранящийся в указателе &lt;name&gt; можно посмотреть командой <i>git rev-parse &lt;name&gt;</i>, например:
-        <pre><code style="color: blue">
-$ git rev-parse master
-69701b6e701d429882c083e98e1ecf195868b38c
-</code></pre>
-        <p>
-            Если коммит «B» имеет родителем коммит «A» (A ← B), то «B» для «A» является потомком (child).
-        </p>
-        <p>
-            Если в репозитории есть коммиты которые являются предками для нескольких коммитов, то говорят о <i>ветвлении</i> коммитов.
-            <br>
-            Если в репозитории есть коммиты у которых более одного предка, то говорят о <i>слиянии</i> коммитов.
-            <br>
-            Репозитории без ветвлений и слияний называется <i>линейными</i>.
-        </p>
-        Автором и коммитером обычно бывает один человек. В этом случае поля author и committer совпадают.
-        <p>
-            Команда <i>git log</i> выводит информацию о всех??? комитах.
-            Но по каждому коммиту видно немного меньше информации, чем выдает <i>git cat-file -p</i>.
-            Сейчас у нас один коммит. И <i>git log</i> выведет информацию только по нему.
-        <pre><code style="color: blue">
-$ git log
-commit 69701b6e701d429882c083e98e1ecf195868b38c (HEAD -> master)
-Author: Ivan Ivanov &lt;ivan@localhost&gt;
-Date:   Sat Jan 1 00:01:00 2000 +0200
-
-    comment #1
-</code></pre>
-        <p>
-            Продолжим рассмотрение нашего примера.
-            Создадим в рабочем каталоге еще один файл
-            и сделаем его отслеживаемым
-        <pre><code style="color: blue">
-$ echo -n "File3 v1" > file3
-
-$ git add file3
-</code></pre>
-
-        <p>
-            Что поменялось?
-        <pre><code style="color: blue">
-$ ls -l .git/index
--rw-r--r-- 1 Konstantin 197121 288 июл 15 14:04 .git/index
-
-$ git ls-files --stage
-100644 b2fb6cc242d8ca8d2623b8deb4a1a17349af6f2f 0       d/file2
-100644 475190118d49d9905c1a82c6fd11dab9ab602cc4 0       file1
-100644 ad2a32f77c6c6eac140b94619e332c89d1319b6b 0       file3
-
-$ find .git/objects -type f
-.git/objects/47/5190118d49d9905c1a82c6fd11dab9ab602cc4
-.git/objects/69/701b6e701d429882c083e98e1ecf195868b38c
-.git/objects/6c/59b709d4abf607ab16a03b22db93412fe437a4
-.git/objects/96/6e9a46c8df9aa3b2108864be07abe7b5d1d0f9
-.git/objects/ad/2a32f77c6c6eac140b94619e332c89d1319b6b <span style="color: red"># новый объект</span>
-.git/objects/b2/fb6cc242d8ca8d2623b8deb4a1a17349af6f2f
-</code></pre>
-        Снова изменился индекс.
-        В него добавилась новая строка для нового отслеживаемого файла.
-        И появился новый blob-объект в базе объектов.
-        <p>
-            Выполним фиксацию
-        <pre><code style="color: blue">
-$ export GIT_AUTHOR_DATE="2000-01-01 00:02"
-
-$ export GIT_COMMITTER_DATE="2000-01-01 00:02"
-
-$ git commit -m "comment #2"
-[master 03c1a7f] comment #2
- 1 file changed, 1 insertion(+)
- create mode 100644 file3
-</code></pre>
-        <p>
-            Что поменялось?
-        <pre><code style="color: blue">
-$ ls -l .git/index
--rw-r--r-- 1 Konstantin 197121 307 июл 15 14:53 .git/index
-
-$ git ls-files --stage
-100644 b2fb6cc242d8ca8d2623b8deb4a1a17349af6f2f 0       d/file2
-100644 475190118d49d9905c1a82c6fd11dab9ab602cc4 0       file1
-100644 ad2a32f77c6c6eac140b94619e332c89d1319b6b 0       file3
-
-$ find .git/objects -type f
-.git/objects/03/c1a7f12800978dde0b8cd6383595e7007d0098 <span style="color: red"># новый объект</span>
-.git/objects/27/63fac853abca428edd5c2a1b48ef5d212ff99a <span style="color: red"># новый объект</span>
-.git/objects/47/5190118d49d9905c1a82c6fd11dab9ab602cc4
-.git/objects/69/701b6e701d429882c083e98e1ecf195868b38c
-.git/objects/6c/59b709d4abf607ab16a03b22db93412fe437a4
-.git/objects/96/6e9a46c8df9aa3b2108864be07abe7b5d1d0f9
-.git/objects/ad/2a32f77c6c6eac140b94619e332c89d1319b6b
-.git/objects/b2/fb6cc242d8ca8d2623b8deb4a1a17349af6f2f
-
-$ git cat-file -t 03c1
-commit
-
-$ git cat-file -t 2763
-tree
-
-$ git cat-file -p 03c1
-tree 2763fac853abca428edd5c2a1b48ef5d212ff99a
-parent 69701b6e701d429882c083e98e1ecf195868b38c
-author Ivan Ivanov &lt;ivan@localhost&gt; 946677720 +0200
-committer Ivan Ivanov &lt;ivan@localhost&gt; 946677720 +0200
-
-comment #2
-
-$ git cat-file -p 2763
-040000 tree 966e9a46c8df9aa3b2108864be07abe7b5d1d0f9    d
-100644 blob 475190118d49d9905c1a82c6fd11dab9ab602cc4    file1
-100644 blob ad2a32f77c6c6eac140b94619e332c89d1319b6b    file3
-</code></pre>
-        Снова изменился индекс (однако вывод команды <i>git ls-files --stage</i> не изменился).
-        <pre><code style="color: blue">
-$ git branch
-* master
-</code></pre>
-        <p>
-            Текущий указатель попрежнему <i>master</i>
-        <pre><code style="color: blue">
-$ git rev-parse master
-03c1a7f12800978dde0b8cd6383595e7007d0098
-</code></pre>
-        Текущий коммит сменился на <i>03c1a7f12800978dde0b8cd6383595e7007d0098</i>
-        <pre><code style="color: blue">
-$ git cat-file -p 03c1
-tree 2763fac853abca428edd5c2a1b48ef5d212ff99a
-parent 69701b6e701d429882c083e98e1ecf195868b38c
-author Ivan Ivanov &lt;ivan@localhost&gt; 946677720 +0200
-committer Ivan Ivanov &lt;ivan@localhost&gt; 946677720 +0200
-
-comment #2
-</code></pre>
-        Новый коммит указывает на новое дерево.
-        Родителем нового коммита является наш первый коммит
-        <p>
-            Новый снимок системы
-        <pre><code style="color: blue">
-2763 (раб.катал.) ---+--&gt; 4751 (файл «file1»)
-                     |
-                     +--&gt; ad2a (файл «file3»)
-                     |
-                     +--&gt; 966e (каталог «d») --&gt; 4751 (файл «file2»)
-</code></pre>
-        <p>
-            Изменим содержимое файла file3, добавив еще одну строку
-        <pre><code style="color: blue">
-$ echo -ne "\nSecond line (v2)" >> file1
-</code></pre>
-        Подготовим для фиксации новую версию файла file1.
-        <pre><code style="color: blue">
-$ git add file1
-
-$ git ls-files --stage
-100644 b2fb6cc242d8ca8d2623b8deb4a1a17349af6f2f 0       d/file2
-100644 1d5260cb0591933230fdaaa8035a94b8e393ea20 0       file1 <span style="color: red"># поменялся идентификатор</span>
-100644 ad2a32f77c6c6eac140b94619e332c89d1319b6b 0       file3
-
-$ find .git/objects -type f
-.git/objects/03/c1a7f12800978dde0b8cd6383595e7007d0098
-.git/objects/1d/5260cb0591933230fdaaa8035a94b8e393ea20 <span style="color: red"># новый объект</span>
-.git/objects/27/63fac853abca428edd5c2a1b48ef5d212ff99a
-.git/objects/47/5190118d49d9905c1a82c6fd11dab9ab602cc4
-.git/objects/69/701b6e701d429882c083e98e1ecf195868b38c
-.git/objects/6c/59b709d4abf607ab16a03b22db93412fe437a4
-.git/objects/96/6e9a46c8df9aa3b2108864be07abe7b5d1d0f9
-.git/objects/ad/2a32f77c6c6eac140b94619e332c89d1319b6b
-.git/objects/b2/fb6cc242d8ca8d2623b8deb4a1a17349af6f2f
-</code></pre>
-        Замечание: Когда команда <i>git add</i> выполняется с модифицированным файлом, она не добавляет, а изменяет уже имеющуюся запись в индексе.
-        <p>
-            Фиксируем новое состояние.
-        <pre><code style="color: blue">
-$ export GIT_AUTHOR_DATE="2000-01-01 00:03"
-
-$ export GIT_COMMITTER_DATE="2000-01-01 00:03"
-
-$ git commit -m "comment #3"
-[master 344b36b] comment #3
- 1 file changed, 2 insertions(+), 1 deletion(-)
-</code></pre>
-        <p>
-            Что поменялось?
         <pre><code style="color: blue">
 $ find .git/objects -type f
 .git/objects/03/c1a7f12800978dde0b8cd6383595e7007d0098
@@ -1618,6 +1133,73 @@ $ git log --graph
 
       comment #1
 </code></pre>
+
+
+
+
+
+
+
+
+
+
+        <p>Команда <i>git log</i> имеет множество параметров. Удобный вывод, которым мы будем пользоваться в дальнейшем, можно получить с такими параметрами:</p>
+
+        <pre><code style="color: blue">
+$ git log --pretty=format:'%h %ad - %s%d [%an]' --graph --date=format:'%Y-%m-%d %H:%M %z'
+* 344b36b 2000-01-01 00:03 +0200 - comment #3 (HEAD -> master) [Ivan Ivanov]
+* 03c1a7f 2000-01-01 00:02 +0200 - comment #2 [Ivan Ivanov]
+* 69701b6 2000-01-01 00:01 +0200 - comment #1 [Ivan Ivanov]
+</code></pre>
+        
+        <h3>Восстановление предыдущих состояний рабочего каталога. Команда <i>git checkout</i></h3>
+
+        <p>
+            Откатить состояние рабочего каталога Git на состояние зафиксированное коммитом с &lt;id&gt; равным &lt;id-commit&gt; можно командой <i>git checkout &lt;id-commit&gt;</i>
+        </p>
+
+        <p>Откатимся на <i>03c1a7</i> (comment #2).</p>
+
+        <pre><code style="color: blue">
+$ git checkout 03c1
+Note: switching to '03c1'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+HEAD сейчас на 03c1a7f comment #2
+</code></pre>
+        <p>Проверьте состояние рабочего каталога. [проверить содеримое каталогов и файлов...]</p>
+
+        <p>Вернемся на состояние зафиксированное последним коммитом (на коммит на который указывает указатель <i>master</i>).</p>
+        <pre><code style="color: blue">
+$ git checkout master
+Предыдущая позиция HEAD была 03c1a7f comment #2
+Переключено на ветку «master»
+</code></pre>
+
+
+
+
+
+
+
+
+
+
+
 
         <h3>Как работает команда <i>git checkout</i></h3>
 
