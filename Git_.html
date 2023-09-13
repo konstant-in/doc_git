@@ -13,64 +13,8 @@
 
         <h2>****</h2>
 
+        <p>Выполним фиксацию</p
 
-
-
-
-
-        <h2>****</h2>
-
-
-
-
-        <p>Автором и коммитером обычно бывает один человек. В этом случае поля author и committer совпадают.</p>
-
-        <p>
-            Каманда <i>git log</i> выводит информацию о всех??? комитах.
-            Но по каждому коммиту видно немного меньше информации, чем выдает <i>git cat-file -p</i>.
-            Сейчас у нас один коммит. И <i>git log</i> выведет информацию только по нему.
-        <pre><code style="color: blue">
-$ git log
-commit 69701b6e701d429882c083e98e1ecf195868b38c (HEAD -> master)
-Author: Ivan Ivanov &lt;ivan@localhost&gt;
-Date:   Sat Jan 1 00:01:00 2000 +0200
-
-    comment #1
-</code></pre>
-        <p>
-            Продолжим рассмотрение нашего примера.
-            Создадим в рабочем каталоге еще один файл
-            и сделаем его отслеживаемым
-        <pre><code style="color: blue">
-$ echo -n "File3 v1" > file3
-
-$ git add file3
-</code></pre>
-
-        <p>
-            Что поменялось?
-        <pre><code style="color: blue">
-$ ls -l .git/index
--rw-r--r-- 1 Konstantin 197121 288 июл 15 14:04 .git/index
-
-$ git ls-files --stage
-100644 b2fb6cc242d8ca8d2623b8deb4a1a17349af6f2f 0       d/file2
-100644 475190118d49d9905c1a82c6fd11dab9ab602cc4 0       file1
-100644 ad2a32f77c6c6eac140b94619e332c89d1319b6b 0       file3
-
-$ find .git/objects -type f
-.git/objects/47/5190118d49d9905c1a82c6fd11dab9ab602cc4
-.git/objects/69/701b6e701d429882c083e98e1ecf195868b38c
-.git/objects/6c/59b709d4abf607ab16a03b22db93412fe437a4
-.git/objects/96/6e9a46c8df9aa3b2108864be07abe7b5d1d0f9
-.git/objects/ad/2a32f77c6c6eac140b94619e332c89d1319b6b <span style="color: red"># новый объект</span>
-.git/objects/b2/fb6cc242d8ca8d2623b8deb4a1a17349af6f2f
-</code></pre>
-        Снова изменился индекс.
-        В него добавилась новая строка для нового отслеживаемого файла.
-        И появился новый blob-объект в базе объектов.
-        <p>
-            Выполним фиксацию
         <pre><code style="color: blue">
 $ export GIT_AUTHOR_DATE="2000-01-01 00:02"
 
@@ -81,8 +25,9 @@ $ git commit -m "comment #2"
  1 file changed, 1 insertion(+)
  create mode 100644 file3
 </code></pre>
-        <p>
-            Что поменялось?
+
+        <p>Что поменялось?</p>
+
         <pre><code style="color: blue">
 $ ls -l .git/index
 -rw-r--r-- 1 Konstantin 197121 307 июл 15 14:53 .git/index
